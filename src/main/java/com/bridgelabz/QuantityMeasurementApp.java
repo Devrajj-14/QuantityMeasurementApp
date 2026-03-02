@@ -68,8 +68,9 @@ public class QuantityMeasurementApp {
         /**
          * UC6: Add another QuantityLength to this one (result unit = this.unit).
          */
-        public QuantityLength add(QuantityLength other) {
-            return QuantityMeasurementApp.add(this, other);
+        public static QuantityLength add(QuantityLength a, QuantityLength b) {
+            if (a == null) throw new IllegalArgumentException("First operand must not be null");
+            return QuantityMeasurementApp.add(a, b, a.getUnit());
         }
 
         @Override
@@ -91,6 +92,10 @@ public class QuantityMeasurementApp {
         }
     }
 
+    public static QuantityLength add(QuantityLength a, QuantityLength b) {
+        if (a == null) throw new IllegalArgumentException("First operand must not be null");
+        return QuantityMeasurementApp.add(a, b, a.getUnit());
+    }
     // ---------------- UC1 / UC2 helpers (same-unit equality) ----------------
 
     public static boolean areFeetEqual(double a, double b) {
@@ -125,18 +130,21 @@ public class QuantityMeasurementApp {
      * Adds two lengths (any units) and returns result in unit of the first operand.
      * Result unit = a.unit
      */
-    public static QuantityLength add(QuantityLength a, QuantityLength b) {
+    public static QuantityLength add(QuantityLength a, QuantityLength b, LengthUnit targetUnit) {
         if (a == null || b == null) {
             throw new IllegalArgumentException("Operands must not be null");
+        }
+        if (targetUnit == null) {
+            throw new IllegalArgumentException("Target unit must not be null");
         }
         if (!Double.isFinite(a.getValue()) || !Double.isFinite(b.getValue())) {
             throw new IllegalArgumentException("Values must be finite (not NaN/Infinity)");
         }
 
         double sumInFeet = a.getUnit().toFeet(a.getValue()) + b.getUnit().toFeet(b.getValue());
-        double sumInAUnit = sumInFeet / a.getUnit().toFeet(1.0);
+        double sumInTarget = sumInFeet / targetUnit.toFeet(1.0);
 
-        return new QuantityLength(sumInAUnit, a.getUnit());
+        return new QuantityLength(sumInTarget, targetUnit);
     }
 
     // ---------------- Demo main ----------------

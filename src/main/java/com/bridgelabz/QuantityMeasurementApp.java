@@ -4,6 +4,9 @@ import java.util.Objects;
 
 public class QuantityMeasurementApp {
 
+    private LengthUnit unit;
+    private double value;
+
     // UC3 Step 1: Enum for supported units (base = FEET)
     public enum LengthUnit {
         FEET(1.0),
@@ -23,8 +26,10 @@ public class QuantityMeasurementApp {
     }
     // UC3 Step 2: Single DRY class for any length + unit
     public static final class QuantityLength {
+
         private final double value;
         private final LengthUnit unit;
+
 
         public QuantityLength(double value, LengthUnit unit) {
             this.value = value;
@@ -34,6 +39,7 @@ public class QuantityMeasurementApp {
         private double valueInFeet() {
             return unit.toFeet(value);
         }
+
 
         @Override
         public boolean equals(Object obj) {
@@ -53,6 +59,30 @@ public class QuantityMeasurementApp {
         public String toString() {
             return "Quantity(" + value + ", " + unit.name().toLowerCase() + ")";
         }
+        public QuantityLength convertTo(LengthUnit target) {
+            double converted = QuantityMeasurementApp.convert(this.value, this.unit, target);
+            return new QuantityLength(converted, target);
+        }
+
+    }
+    // --- UC5: Public conversion API ---
+    public static double convert(double value, LengthUnit source, LengthUnit target) {
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Value must be finite (not NaN/Infinity)");
+        }
+        if (source == null || target == null) {
+            throw new IllegalArgumentException("Source and target units must not be null");
+        }
+
+        // normalize to base unit (feet), then convert to target
+        double inFeet = source.toFeet(value);
+        return inFeet / target.toFeet(1.0);
+    }
+
+    // Instance conversion: returns new immutable value object
+    public QuantityLength convertTo(LengthUnit target) {
+        double converted = QuantityMeasurementApp.convert(this.value, this.unit, target);
+        return new QuantityLength(converted, target);
     }
 
     // Backward-compat style helpers (so UC1/UC2 behavior still easy to call)

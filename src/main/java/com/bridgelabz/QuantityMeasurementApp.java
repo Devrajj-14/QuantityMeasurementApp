@@ -120,5 +120,13 @@ public class QuantityMeasurementApp {
         System.out.println("Add (target YARDS): " + qFeet.add(qInch, LengthUnit.YARDS)); // ~Quantity(0.666..., YARDS)
 
         System.out.println("LengthUnit.INCH.convertToBaseUnit(12.0): " + LengthUnit.INCH.convertToBaseUnit(12.0)); // 1.0 feet
+
+        QuantityWeight w1 = new QuantityWeight(1.0, WeightUnit.KILOGRAM);
+        QuantityWeight w2 = new QuantityWeight(1000.0, WeightUnit.GRAM);
+
+        System.out.println(w1.equals(w2)); // true
+        System.out.println(w1.convertTo(WeightUnit.POUND)); // ~2.20462 lb
+        System.out.println(w1.add(w2)); // Quantity(2.0, KILOGRAM)
+        System.out.println(w1.add(w2, WeightUnit.GRAM)); // Quantity(2000.0, GRAM)
     }
 }

@@ -6,8 +6,10 @@ public class QuantityMeasurementApp {
 
     // UC3 Step 1: Enum for supported units (base = FEET)
     public enum LengthUnit {
-        FEET(1.0),          // 1 ft = 1 ft
-        INCH(1.0 / 12.0);   // 1 inch = 1/12 ft
+        FEET(1.0),
+        INCH(1.0 / 12.0),
+        YARDS(3.0),
+        CENTIMETERS(0.393701 / 12.0);
 
         private final double toFeetFactor;
 
@@ -19,7 +21,6 @@ public class QuantityMeasurementApp {
             return value * toFeetFactor;
         }
     }
-
     // UC3 Step 2: Single DRY class for any length + unit
     public static final class QuantityLength {
         private final double value;
@@ -77,5 +78,7 @@ public class QuantityMeasurementApp {
 
         System.out.println("Input: " + q3 + " and " + q4);
         System.out.println("Output: Equal (" + q3.equals(q4) + ")");
+        System.out.println(new QuantityLength(1.0, LengthUnit.YARDS)
+                .equals(new QuantityLength(3.0, LengthUnit.FEET))); // true
     }
 }

@@ -3,37 +3,15 @@ package com.bridgelabz;
 import java.util.Objects;
 
 /**
- * Quantity Measurement App
- * UC1-UC6 combined (Length): equality, unit support, conversion, addition.
- * Base unit used for internal normalization: FEET.
+ * Quantity Measurement App (UC1–UC8 for Length).
+ * UC8 refactor: LengthUnit is standalone and owns conversion logic.
  */
 public class QuantityMeasurementApp {
 
-    /**
-     * Supported length units with conversion factors relative to FEET (base unit).
-     */
-    public enum LengthUnit {
-        FEET(1.0),                 // 1 ft = 1 ft
-        INCH(1.0 / 12.0),          // 1 inch = 1/12 ft
-        YARDS(3.0),                // 1 yard = 3 ft
-        CENTIMETERS(0.393701 / 12.0); // 1 cm = 0.393701 inch = 0.393701/12 ft
-
-        private final double toFeetFactor;
-
-        LengthUnit(double toFeetFactor) {
-            this.toFeetFactor = toFeetFactor;
-        }
-
-        /** Converts a value in this unit to feet. */
-        public double toFeet(double value) {
-            return value * toFeetFactor;
-        }
-    }
-
-    /**
-     * Immutable Value Object representing a length quantity with a unit.
-     */
+    /** Immutable value object representing a length quantity with a LengthUnit. */
     public static final class QuantityLength {
+        private static final double EPS = 1e-6;
+
         private final double value;
         private final LengthUnit unit;
 
@@ -41,8 +19,11 @@ public class QuantityMeasurementApp {
             if (!Double.isFinite(value)) {
                 throw new IllegalArgumentException("Value must be finite (not NaN/Infinity)");
             }
-            this.unit = Objects.requireNonNull(unit, "Unit must not be null");
+            if (unit == null) {
+                throw new IllegalArgumentException("Unit must not be null");
+            }
             this.value = value;
+            this.unit = unit;
         }
 
         public double getValue() {
@@ -53,51 +34,71 @@ public class QuantityMeasurementApp {
             return unit;
         }
 
-        private double valueInFeet() {
-            return unit.toFeet(value);
+        /** Converts this quantity into the target unit and returns a NEW object. */
+        public QuantityLength convertTo(LengthUnit targetUnit) {
+            Objects.requireNonNull(targetUnit, "Target unit must not be null");
+            double baseFeet = unit.convertToBaseUnit(value);            // delegate to enum
+            double converted = targetUnit.convertFromBaseUnit(baseFeet); // delegate to enum
+            return new QuantityLength(converted, targetUnit);
         }
 
-        /**
-         * UC5: Convert this QuantityLength to another unit (returns a new object).
-         */
-        public QuantityLength convertTo(LengthUnit target) {
-            double converted = QuantityMeasurementApp.convert(this.value, this.unit, target);
-            return new QuantityLength(converted, target);
+        /** UC5: Static conversion API. */
+        public static double convert(double value, LengthUnit source, LengthUnit target) {
+            if (!Double.isFinite(value)) throw new IllegalArgumentException("Value must be finite");
+            if (source == null) throw new IllegalArgumentException("Source unit must not be null");
+            if (target == null) throw new IllegalArgumentException("Target unit must not be null");
+
+            double baseFeet = source.convertToBaseUnit(value);
+            return target.convertFromBaseUnit(baseFeet);
         }
 
-        /**
-         * UC6: Add another QuantityLength to this one (result unit = this.unit).
-         */
-        public static QuantityLength add(QuantityLength a, QuantityLength b) {
-            if (a == null) throw new IllegalArgumentException("First operand must not be null");
-            return QuantityMeasurementApp.add(a, b, a.getUnit());
+        /** UC6: Add and return in FIRST operand unit. */
+        public QuantityLength add(QuantityLength other) {
+            Objects.requireNonNull(other, "Other quantity must not be null");
+            return add(other, this.unit);
         }
 
+        /** UC7: Add and return in EXPLICIT target unit. */
+        public QuantityLength add(QuantityLength other, LengthUnit targetUnit) {
+            Objects.requireNonNull(other, "Other quantity must not be null");
+            Objects.requireNonNull(targetUnit, "Target unit must not be null");
+
+            double aFeet = this.unit.convertToBaseUnit(this.value);
+            double bFeet = other.unit.convertToBaseUnit(other.value);
+
+            double sumFeet = aFeet + bFeet;
+            double sumInTarget = targetUnit.convertFromBaseUnit(sumFeet);
+
+            return new QuantityLength(sumInTarget, targetUnit);
+        }
+
+        /** Equality is based on physical length (converted to base feet). */
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            QuantityLength other = (QuantityLength) obj;
-            return Double.compare(this.valueInFeet(), other.valueInFeet()) == 0;
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof QuantityLength other)) return false;
+
+            double thisFeet = this.unit.convertToBaseUnit(this.value);
+            double otherFeet = other.unit.convertToBaseUnit(other.value);
+
+            return Math.abs(thisFeet - otherFeet) <= EPS;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(valueInFeet());
+            // hash based on normalized base-unit value (with rounding to stabilize)
+            double feet = unit.convertToBaseUnit(value);
+            long rounded = Math.round(feet / EPS); // stable bucket
+            return Long.hashCode(rounded);
         }
 
         @Override
         public String toString() {
-            return "Quantity(" + value + ", " + unit.name() + ")";
+            return "Quantity(" + value + ", " + unit + ")";
         }
     }
 
-    public static QuantityLength add(QuantityLength a, QuantityLength b) {
-        if (a == null) throw new IllegalArgumentException("First operand must not be null");
-        return QuantityMeasurementApp.add(a, b, a.getUnit());
-    }
-    // ---------------- UC1 / UC2 helpers (same-unit equality) ----------------
-
+    // UC1/UC2 helper methods (optional, but match your earlier "reduce main dependency")
     public static boolean areFeetEqual(double a, double b) {
         return new QuantityLength(a, LengthUnit.FEET).equals(new QuantityLength(b, LengthUnit.FEET));
     }
@@ -106,60 +107,18 @@ public class QuantityMeasurementApp {
         return new QuantityLength(a, LengthUnit.INCH).equals(new QuantityLength(b, LengthUnit.INCH));
     }
 
-    // ---------------- UC5: Conversion API ----------------
-
-    /**
-     * Converts a numeric value from source unit to target unit using base normalization.
-     * Formula: result = value * (source.toFeetFactor / target.toFeetFactor)
-     */
-    public static double convert(double value, LengthUnit source, LengthUnit target) {
-        if (!Double.isFinite(value)) {
-            throw new IllegalArgumentException("Value must be finite (not NaN/Infinity)");
-        }
-        if (source == null || target == null) {
-            throw new IllegalArgumentException("Source and target units must not be null");
-        }
-
-        double inFeet = source.toFeet(value);          // normalize to base
-        return inFeet / target.toFeet(1.0);            // convert base -> target
-    }
-
-    // ---------------- UC6: Addition API ----------------
-
-    /**
-     * Adds two lengths (any units) and returns result in unit of the first operand.
-     * Result unit = a.unit
-     */
-    public static QuantityLength add(QuantityLength a, QuantityLength b, LengthUnit targetUnit) {
-        if (a == null || b == null) {
-            throw new IllegalArgumentException("Operands must not be null");
-        }
-        if (targetUnit == null) {
-            throw new IllegalArgumentException("Target unit must not be null");
-        }
-        if (!Double.isFinite(a.getValue()) || !Double.isFinite(b.getValue())) {
-            throw new IllegalArgumentException("Values must be finite (not NaN/Infinity)");
-        }
-
-        double sumInFeet = a.getUnit().toFeet(a.getValue()) + b.getUnit().toFeet(b.getValue());
-        double sumInTarget = sumInFeet / targetUnit.toFeet(1.0);
-
-        return new QuantityLength(sumInTarget, targetUnit);
-    }
-
-    // ---------------- Demo main ----------------
-
     public static void main(String[] args) {
-        // UC3/UC4 equality demo
-        QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
-        QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
-        System.out.println("Equality: " + q1 + " == " + q2 + " ? " + q1.equals(q2));
+        QuantityLength qFeet = new QuantityLength(1.0, LengthUnit.FEET);
+        QuantityLength qInch = new QuantityLength(12.0, LengthUnit.INCH);
 
-        // UC5 conversion demo
-        System.out.println("convert(1.0, FEET, INCH) = " + convert(1.0, LengthUnit.FEET, LengthUnit.INCH));
+        System.out.println("Input: " + qFeet + " and " + qInch);
+        System.out.println("Equals: " + qFeet.equals(qInch)); // true
 
-        // UC6 addition demo
-        QuantityLength sum = add(new QuantityLength(1.0, LengthUnit.FEET), new QuantityLength(12.0, LengthUnit.INCH));
-        System.out.println("Add: Quantity(1.0, FEET) + Quantity(12.0, INCH) = " + sum);
+        System.out.println("Convert: " + qFeet.convertTo(LengthUnit.INCH)); // ~Quantity(12.0, INCH)
+
+        System.out.println("Add (target FEET): " + qFeet.add(qInch, LengthUnit.FEET));   // ~Quantity(2.0, FEET)
+        System.out.println("Add (target YARDS): " + qFeet.add(qInch, LengthUnit.YARDS)); // ~Quantity(0.666..., YARDS)
+
+        System.out.println("LengthUnit.INCH.convertToBaseUnit(12.0): " + LengthUnit.INCH.convertToBaseUnit(12.0)); // 1.0 feet
     }
 }

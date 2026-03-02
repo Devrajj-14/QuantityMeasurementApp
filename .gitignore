@@ -1,0 +1,33 @@
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# Java
+*.class
+
+# Maven / Gradle
+target/
+.gradle/
+**/build/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*

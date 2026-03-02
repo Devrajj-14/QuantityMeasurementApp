@@ -1,0 +1,19 @@
+# Maven
+target/
+*.log
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Mac
+.DS_Store
+
+# VS Code (optional)
+.vscode/
+
+# Maven wrapper (keep wrapper files, ignore jar if you want)
+!.mvn/wrapper/maven-wrapper.jar

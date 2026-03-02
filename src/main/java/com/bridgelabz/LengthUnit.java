@@ -1,16 +1,14 @@
 package com.bridgelabz;
 
-import java.util.Objects;
-
 /**
- * UC8: Standalone LengthUnit enum with full responsibility for conversions
- * to/from the base unit (FEET).
+ * Standalone enum for length units (UC8).
+ * Responsible for converting to/from base unit (FEET).
  */
 public enum LengthUnit {
-    FEET(1.0),
-    INCH(1.0 / 12.0),
-    YARDS(3.0),
-    CENTIMETERS(0.393701 / 12.0);
+    FEET(1.0),                 // base
+    INCH(1.0 / 12.0),          // 1 inch = 1/12 feet
+    YARDS(3.0),                // 1 yard = 3 feet
+    CENTIMETERS(1.0 / 30.48);  // 1 cm = 1/30.48 feet
 
     private final double toFeetFactor;
 
@@ -18,33 +16,23 @@ public enum LengthUnit {
         this.toFeetFactor = toFeetFactor;
     }
 
-    /** Conversion factor to base unit (FEET). */
     public double getToFeetFactor() {
         return toFeetFactor;
     }
 
     /** Convert a value in this unit to base unit (feet). */
     public double convertToBaseUnit(double value) {
-        validateFinite(value);
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Value must be finite");
+        }
         return value * toFeetFactor;
     }
 
     /** Convert a value in base unit (feet) to this unit. */
-    public double convertFromBaseUnit(double baseFeetValue) {
-        validateFinite(baseFeetValue);
-        return baseFeetValue / toFeetFactor;
-    }
-
-    /** Convert a value from this unit to a target unit via base (feet). */
-    public double convert(double value, LengthUnit targetUnit) {
-        Objects.requireNonNull(targetUnit, "Target unit must not be null");
-        double inFeet = convertToBaseUnit(value);
-        return targetUnit.convertFromBaseUnit(inFeet);
-    }
-
-    private static void validateFinite(double value) {
-        if (!Double.isFinite(value)) {
-            throw new IllegalArgumentException("Value must be finite (not NaN/Infinity)");
+    public double convertFromBaseUnit(double feetValue) {
+        if (!Double.isFinite(feetValue)) {
+            throw new IllegalArgumentException("Value must be finite");
         }
+        return feetValue / toFeetFactor;
     }
 }

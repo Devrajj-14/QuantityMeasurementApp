@@ -3,35 +3,14 @@ package com.bridgelabz;
 import java.util.Objects;
 
 /**
- * Quantity Measurement App
- * UC1-UC6 combined (Length): equality, unit support, conversion, addition.
- * Base unit used for internal normalization: FEET.
+ * Quantity Measurement App (UC1–UC8 for Length)
+ * UC8 refactor: LengthUnit is standalone and owns conversion logic.
  */
 public class QuantityMeasurementApp {
 
     /**
-     * Supported length units with conversion factors relative to FEET (base unit).
-     */
-    public enum LengthUnit {
-        FEET(1.0),                 // 1 ft = 1 ft
-        INCH(1.0 / 12.0),          // 1 inch = 1/12 ft
-        YARDS(3.0),                // 1 yard = 3 ft
-        CENTIMETERS(0.393701 / 12.0); // 1 cm = 0.393701 inch = 0.393701/12 ft
-
-        private final double toFeetFactor;
-
-        LengthUnit(double toFeetFactor) {
-            this.toFeetFactor = toFeetFactor;
-        }
-
-        /** Converts a value in this unit to feet. */
-        public double toFeet(double value) {
-            return value * toFeetFactor;
-        }
-    }
-
-    /**
-     * Immutable Value Object representing a length quantity with a unit.
+     * Immutable value object representing a length quantity with a LengthUnit.
+     * Delegates conversion to LengthUnit (UC8).
      */
     public static final class QuantityLength {
         private final double value;
@@ -54,23 +33,24 @@ public class QuantityMeasurementApp {
         }
 
         private double valueInFeet() {
-            return unit.toFeet(value);
+            return unit.convertToBaseUnit(value);
         }
 
-        /**
-         * UC5: Convert this QuantityLength to another unit (returns a new object).
-         */
-        public QuantityLength convertTo(LengthUnit target) {
-            double converted = QuantityMeasurementApp.convert(this.value, this.unit, target);
-            return new QuantityLength(converted, target);
+        // UC5: instance conversion
+        public QuantityLength convertTo(LengthUnit targetUnit) {
+            Objects.requireNonNull(targetUnit, "Target unit must not be null");
+            double convertedValue = unit.convert(value, targetUnit);
+            return new QuantityLength(convertedValue, targetUnit);
         }
 
-        /**
-         * UC6: Add another QuantityLength to this one (result unit = this.unit).
-         */
-        public static QuantityLength add(QuantityLength a, QuantityLength b) {
-            if (a == null) throw new IllegalArgumentException("First operand must not be null");
-            return QuantityMeasurementApp.add(a, b, a.getUnit());
+        // UC6: instance add (result = this.unit)
+        public QuantityLength add(QuantityLength other) {
+            return QuantityMeasurementApp.add(this, other);
+        }
+
+        // UC7: instance add with explicit target
+        public QuantityLength add(QuantityLength other, LengthUnit targetUnit) {
+            return QuantityMeasurementApp.add(this, other, targetUnit);
         }
 
         @Override
@@ -78,6 +58,8 @@ public class QuantityMeasurementApp {
             if (this == obj) return true;
             if (obj == null || getClass() != obj.getClass()) return false;
             QuantityLength other = (QuantityLength) obj;
+
+            // Compare using base unit normalization (feet)
             return Double.compare(this.valueInFeet(), other.valueInFeet()) == 0;
         }
 
@@ -92,12 +74,7 @@ public class QuantityMeasurementApp {
         }
     }
 
-    public static QuantityLength add(QuantityLength a, QuantityLength b) {
-        if (a == null) throw new IllegalArgumentException("First operand must not be null");
-        return QuantityMeasurementApp.add(a, b, a.getUnit());
-    }
-    // ---------------- UC1 / UC2 helpers (same-unit equality) ----------------
-
+    // ---------------- UC1/UC2 helpers ----------------
     public static boolean areFeetEqual(double a, double b) {
         return new QuantityLength(a, LengthUnit.FEET).equals(new QuantityLength(b, LengthUnit.FEET));
     }
@@ -106,30 +83,21 @@ public class QuantityMeasurementApp {
         return new QuantityLength(a, LengthUnit.INCH).equals(new QuantityLength(b, LengthUnit.INCH));
     }
 
-    // ---------------- UC5: Conversion API ----------------
-
-    /**
-     * Converts a numeric value from source unit to target unit using base normalization.
-     * Formula: result = value * (source.toFeetFactor / target.toFeetFactor)
-     */
+    // ---------------- UC5: conversion API ----------------
     public static double convert(double value, LengthUnit source, LengthUnit target) {
-        if (!Double.isFinite(value)) {
-            throw new IllegalArgumentException("Value must be finite (not NaN/Infinity)");
-        }
         if (source == null || target == null) {
             throw new IllegalArgumentException("Source and target units must not be null");
         }
-
-        double inFeet = source.toFeet(value);          // normalize to base
-        return inFeet / target.toFeet(1.0);            // convert base -> target
+        return source.convert(value, target);
     }
 
-    // ---------------- UC6: Addition API ----------------
+    // ---------------- UC6: addition (result unit = first operand unit) ----------------
+    public static QuantityLength add(QuantityLength a, QuantityLength b) {
+        if (a == null) throw new IllegalArgumentException("First operand must not be null");
+        return add(a, b, a.getUnit()); // delegate to UC7 overload (DRY)
+    }
 
-    /**
-     * Adds two lengths (any units) and returns result in unit of the first operand.
-     * Result unit = a.unit
-     */
+    // ---------------- UC7: addition with explicit target unit ----------------
     public static QuantityLength add(QuantityLength a, QuantityLength b, LengthUnit targetUnit) {
         if (a == null || b == null) {
             throw new IllegalArgumentException("Operands must not be null");
@@ -141,25 +109,28 @@ public class QuantityMeasurementApp {
             throw new IllegalArgumentException("Values must be finite (not NaN/Infinity)");
         }
 
-        double sumInFeet = a.getUnit().toFeet(a.getValue()) + b.getUnit().toFeet(b.getValue());
-        double sumInTarget = sumInFeet / targetUnit.toFeet(1.0);
+        // Convert both to base (feet), add, then convert to target using LengthUnit
+        double sumFeet =
+                a.getUnit().convertToBaseUnit(a.getValue())
+                        + b.getUnit().convertToBaseUnit(b.getValue());
 
+        double sumInTarget = targetUnit.convertFromBaseUnit(sumFeet);
         return new QuantityLength(sumInTarget, targetUnit);
     }
 
     // ---------------- Demo main ----------------
-
     public static void main(String[] args) {
-        // UC3/UC4 equality demo
-        QuantityLength q1 = new QuantityLength(1.0, LengthUnit.FEET);
-        QuantityLength q2 = new QuantityLength(12.0, LengthUnit.INCH);
-        System.out.println("Equality: " + q1 + " == " + q2 + " ? " + q1.equals(q2));
+        QuantityLength qFeet = new QuantityLength(1.0, LengthUnit.FEET);
+        QuantityLength qInch = new QuantityLength(12.0, LengthUnit.INCH);
 
-        // UC5 conversion demo
-        System.out.println("convert(1.0, FEET, INCH) = " + convert(1.0, LengthUnit.FEET, LengthUnit.INCH));
+        System.out.println("Input: " + qFeet + " and " + qInch);
+        System.out.println("Equals: " + qFeet.equals(qInch)); // true
 
-        // UC6 addition demo
-        QuantityLength sum = add(new QuantityLength(1.0, LengthUnit.FEET), new QuantityLength(12.0, LengthUnit.INCH));
-        System.out.println("Add: Quantity(1.0, FEET) + Quantity(12.0, INCH) = " + sum);
+        System.out.println("Convert: " + qFeet.convertTo(LengthUnit.INCH)); // Quantity(12.0, INCH)
+
+        System.out.println("Add (target FEET): " + qFeet.add(qInch, LengthUnit.FEET)); // Quantity(2.0, FEET)
+        System.out.println("Add (target YARDS): " + qFeet.add(qInch, LengthUnit.YARDS)); // ~0.6667 yards
+
+        System.out.println("LengthUnit.INCH.convertToBaseUnit(12.0): " + LengthUnit.INCH.convertToBaseUnit(12.0)); // 1.0
     }
 }

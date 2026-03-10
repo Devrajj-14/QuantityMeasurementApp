@@ -66,7 +66,7 @@ public class Quantity<U extends IMeasurable> {
     }
 
     public Quantity<U> add(Quantity<U> other, U targetUnit) {
-        validateArithmeticOperands(other, targetUnit, true);
+        validateArithmeticOperands(other, targetUnit, true, "addition");
 
         double baseResult = performBaseArithmetic(other, ArithmeticOperation.ADD);
         double convertedResult = targetUnit.convertFromBaseUnit(baseResult);
@@ -79,7 +79,7 @@ public class Quantity<U extends IMeasurable> {
     }
 
     public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
-        validateArithmeticOperands(other, targetUnit, true);
+        validateArithmeticOperands(other, targetUnit, true, "subtraction");
 
         double baseResult = performBaseArithmetic(other, ArithmeticOperation.SUBTRACT);
         double convertedResult = targetUnit.convertFromBaseUnit(baseResult);
@@ -88,11 +88,11 @@ public class Quantity<U extends IMeasurable> {
     }
 
     public double divide(Quantity<U> other) {
-        validateArithmeticOperands(other, null, false);
+        validateArithmeticOperands(other, null, false, "division");
         return performBaseArithmetic(other, ArithmeticOperation.DIVIDE);
     }
 
-    private void validateArithmeticOperands(Quantity<U> other, U targetUnit, boolean targetUnitRequired) {
+    private void validateArithmeticOperands(Quantity<U> other, U targetUnit, boolean targetUnitRequired, String operation) {
         if (other == null) {
             throw new IllegalArgumentException("Other quantity cannot be null");
         }
@@ -104,6 +104,9 @@ public class Quantity<U extends IMeasurable> {
         if (!Double.isFinite(this.value) || !Double.isFinite(other.value)) {
             throw new IllegalArgumentException("Quantity values must be finite");
         }
+
+        this.unit.validateOperationSupport(operation);
+        other.unit.validateOperationSupport(operation);
 
         if (targetUnitRequired) {
             validateTargetUnit(targetUnit);

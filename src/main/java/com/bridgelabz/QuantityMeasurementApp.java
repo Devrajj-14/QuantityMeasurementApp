@@ -31,32 +31,42 @@ public class QuantityMeasurementApp {
     }
 
     public static void main(String[] args) {
-        Quantity<LengthUnit> length1 = new Quantity<>(10.0, LengthUnit.FEET);
-        Quantity<LengthUnit> length2 = new Quantity<>(6.0, LengthUnit.INCH);
+        Quantity<TemperatureUnit> temp1 = new Quantity<>(0.0, TemperatureUnit.CELSIUS);
+        Quantity<TemperatureUnit> temp2 = new Quantity<>(32.0, TemperatureUnit.FAHRENHEIT);
+        Quantity<TemperatureUnit> temp3 = new Quantity<>(273.15, TemperatureUnit.KELVIN);
 
-        Quantity<WeightUnit> weight1 = new Quantity<>(10.0, WeightUnit.KILOGRAM);
-        Quantity<WeightUnit> weight2 = new Quantity<>(5000.0, WeightUnit.GRAM);
+        System.out.println("Temperature Operations:");
+        demonstrateEquality(temp1, temp2);
+        demonstrateEquality(temp1, temp3);
+        demonstrateConversion(new Quantity<>(100.0, TemperatureUnit.CELSIUS), TemperatureUnit.FAHRENHEIT);
+        demonstrateConversion(new Quantity<>(32.0, TemperatureUnit.FAHRENHEIT), TemperatureUnit.CELSIUS);
+        demonstrateConversion(new Quantity<>(0.0, TemperatureUnit.CELSIUS), TemperatureUnit.KELVIN);
 
-        Quantity<VolumeUnit> volume1 = new Quantity<>(5.0, VolumeUnit.LITRE);
-        Quantity<VolumeUnit> volume2 = new Quantity<>(500.0, VolumeUnit.MILLILITRE);
+        try {
+            demonstrateAddition(
+                    new Quantity<>(100.0, TemperatureUnit.CELSIUS),
+                    new Quantity<>(50.0, TemperatureUnit.CELSIUS)
+            );
+        } catch (UnsupportedOperationException e) {
+            System.out.println(e.getMessage());
+        }
 
-        System.out.println("Length Operations:");
-        demonstrateSubtraction(length1, length2);
-        demonstrateSubtraction(length1, length2, LengthUnit.INCH);
-        demonstrateDivision(new Quantity<>(24.0, LengthUnit.INCH), new Quantity<>(2.0, LengthUnit.FEET));
+        try {
+            demonstrateSubtraction(
+                    new Quantity<>(100.0, TemperatureUnit.CELSIUS),
+                    new Quantity<>(50.0, TemperatureUnit.CELSIUS)
+            );
+        } catch (UnsupportedOperationException e) {
+            System.out.println(e.getMessage());
+        }
 
-        System.out.println();
-
-        System.out.println("Weight Operations:");
-        demonstrateSubtraction(weight1, weight2);
-        demonstrateSubtraction(weight1, weight2, WeightUnit.GRAM);
-        demonstrateDivision(new Quantity<>(10.0, WeightUnit.KILOGRAM), new Quantity<>(5.0, WeightUnit.KILOGRAM));
-
-        System.out.println();
-
-        System.out.println("Volume Operations:");
-        demonstrateSubtraction(volume1, volume2);
-        demonstrateSubtraction(volume1, new Quantity<>(2.0, VolumeUnit.LITRE), VolumeUnit.MILLILITRE);
-        demonstrateDivision(new Quantity<>(1000.0, VolumeUnit.MILLILITRE), new Quantity<>(1.0, VolumeUnit.LITRE));
+        try {
+            demonstrateDivision(
+                    new Quantity<>(100.0, TemperatureUnit.CELSIUS),
+                    new Quantity<>(50.0, TemperatureUnit.CELSIUS)
+            );
+        } catch (UnsupportedOperationException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }

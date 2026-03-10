@@ -5,6 +5,7 @@ import java.util.Objects;
 public class Quantity<U extends IMeasurable> {
     private final double value;
     private final U unit;
+    private static final double EPSILON = 1e-6;
 
     public Quantity(double value, U unit) {
         if (unit == null) {
@@ -33,7 +34,7 @@ public class Quantity<U extends IMeasurable> {
         double baseValue = unit.convertToBaseUnit(value);
         double convertedValue = targetUnit.convertFromBaseUnit(baseValue);
 
-        return new Quantity<>(roundToTwoDecimals(convertedValue), targetUnit);
+        return new Quantity<>(convertedValue, targetUnit);
     }
 
     public Quantity<U> add(Quantity<U> other) {
@@ -51,12 +52,12 @@ public class Quantity<U extends IMeasurable> {
             throw new IllegalArgumentException("Target unit cannot be null");
         }
 
-        double thisBase = this.unit.convertToBaseUnit(this.value);
-        double otherBase = other.unit.convertToBaseUnit(other.value);
-        double sumBase = thisBase + otherBase;
+        double thisBaseValue = this.unit.convertToBaseUnit(this.value);
+        double otherBaseValue = other.unit.convertToBaseUnit(other.value);
+        double sumBaseValue = thisBaseValue + otherBaseValue;
+        double resultValue = targetUnit.convertFromBaseUnit(sumBaseValue);
 
-        double result = targetUnit.convertFromBaseUnit(sumBase);
-        return new Quantity<>(roundToTwoDecimals(result), targetUnit);
+        return new Quantity<>(resultValue, targetUnit);
     }
 
     @Override
@@ -68,24 +69,21 @@ public class Quantity<U extends IMeasurable> {
             return false;
         }
 
-        double thisBase = this.unit.convertToBaseUnit(this.value);
-        double otherBase = other.unit.convertToBaseUnit(other.value);
+        double thisBaseValue = this.unit.convertToBaseUnit(this.value);
+        double otherBaseValue = other.unit.convertToBaseUnit(other.value);
 
-        return Double.compare(roundToTwoDecimals(thisBase), roundToTwoDecimals(otherBase)) == 0;
+        return Math.abs(thisBaseValue - otherBaseValue) < EPSILON;
     }
 
     @Override
     public int hashCode() {
-        double baseValue = roundToTwoDecimals(unit.convertToBaseUnit(value));
-        return Objects.hash(baseValue, unit.getClass());
+        double baseValue = unit.convertToBaseUnit(value);
+        long rounded = Math.round(baseValue / EPSILON);
+        return Objects.hash(rounded, unit.getClass());
     }
 
     @Override
     public String toString() {
-        return "Quantity(" + roundToTwoDecimals(value) + ", " + unit.getUnitName() + ")";
-    }
-
-    private double roundToTwoDecimals(double number) {
-        return Math.round(number * 100.0) / 100.0;
+        return "Quantity(" + value + ", " + unit.getUnitName() + ")";
     }
 }

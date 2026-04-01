@@ -31,4 +31,9 @@ public enum LengthUnit implements IMeasurable {
     public String getUnitName() {
         return name();
     }
+
+    @Override
+    public String getMeasurementType() {
+        return "LENGTH";
+    }
 }

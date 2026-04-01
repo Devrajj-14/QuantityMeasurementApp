@@ -70,4 +70,9 @@ public enum TemperatureUnit implements IMeasurable {
                 "Temperature does not support " + operation + " operation in a meaningful way"
         );
     }
+
+    @Override
+    public String getMeasurementType() {
+        return "TEMPERATURE";
+    }
 }

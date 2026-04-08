@@ -1,5 +1,4 @@
-package com.bridgelabz;
-
+package com.bridgelabz.quantitymeasurement.unit;
 import java.util.function.Function;
 
 public enum TemperatureUnit implements IMeasurable {

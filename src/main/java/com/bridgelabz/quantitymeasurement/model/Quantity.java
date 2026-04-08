@@ -1,4 +1,6 @@
-package com.bridgelabz;
+package com.bridgelabz.quantitymeasurement.model;
+
+import com.bridgelabz.quantitymeasurement.unit.IMeasurable;
 
 import java.util.Objects;
 

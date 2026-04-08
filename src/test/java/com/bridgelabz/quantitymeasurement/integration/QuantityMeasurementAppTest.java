@@ -1,9 +1,17 @@
-package com.bridgelabz;
+package com.bridgelabz.quantitymeasurement.integration;
 
+import com.bridgelabz.quantitymeasurement.model.Quantity;
+import com.bridgelabz.quantitymeasurement.unit.LengthUnit;
+import com.bridgelabz.quantitymeasurement.unit.VolumeUnit;
+import com.bridgelabz.quantitymeasurement.unit.WeightUnit;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Existing tests for quantity subtraction, division, and cross-category operations.
+ * Package and imports fixed for refactored project structure.
+ */
 public class QuantityMeasurementAppTest {
 
     private static final double EPS = 1e-6;

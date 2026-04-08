@@ -1,5 +1,4 @@
-package com.bridgelabz;
-
+package com.bridgelabz.quantitymeasurement.unit;
 public interface IMeasurable {
     double getConversionFactor();
     double convertToBaseUnit(double value);

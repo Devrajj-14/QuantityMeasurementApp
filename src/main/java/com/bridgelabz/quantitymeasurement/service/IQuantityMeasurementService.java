@@ -1,70 +1,45 @@
 package com.bridgelabz.quantitymeasurement.service;
 
-import com.bridgelabz.quantitymeasurement.entity.QuantityMeasurementEntity;
-import com.bridgelabz.quantitymeasurement.unit.IMeasurable;
-import com.bridgelabz.quantitymeasurement.model.Quantity;
+import com.bridgelabz.quantitymeasurement.dto.*;
 
 import java.util.List;
 
 /**
  * Service interface for quantity measurement operations.
- * Combines business logic with persistence.
+ * Works with DTOs for controller communication and JPA for persistence.
  */
 public interface IQuantityMeasurementService {
 
-    /**
-     * Compare two quantities and persist the comparison record.
-     * Returns true if they are equal (in base-unit terms).
-     */
-    <U extends IMeasurable> boolean compareQuantities(Quantity<U> q1, Quantity<U> q2);
+    /** Compare two quantities for equality. */
+    QuantityResponseDTO compareQuantities(QuantityOperationRequestDTO request);
 
-    /**
-     * Convert a quantity to a target unit and persist the conversion record.
-     */
-    <U extends IMeasurable> Quantity<U> convertQuantity(Quantity<U> quantity, U targetUnit);
+    /** Convert a quantity to a target unit. */
+    QuantityResponseDTO convertQuantity(QuantityConversionRequestDTO request);
 
-    /**
-     * Add two quantities, persist the record, and return the result.
-     */
-    <U extends IMeasurable> Quantity<U> addQuantities(Quantity<U> q1, Quantity<U> q2, U targetUnit);
+    /** Add two quantities. */
+    QuantityResponseDTO addQuantities(QuantityOperationRequestDTO request);
 
-    /**
-     * Subtract two quantities, persist the record, and return the result.
-     */
-    <U extends IMeasurable> Quantity<U> subtractQuantities(Quantity<U> q1, Quantity<U> q2, U targetUnit);
+    /** Subtract two quantities. */
+    QuantityResponseDTO subtractQuantities(QuantityOperationRequestDTO request);
 
-    /**
-     * Divide two quantities, persist the record, and return the ratio.
-     */
-    <U extends IMeasurable> double divideQuantities(Quantity<U> q1, Quantity<U> q2);
+    /** Divide two quantities (returns dimensionless ratio). */
+    QuantityResponseDTO divideQuantities(QuantityOperationRequestDTO request);
 
-    /**
-     * Get all measurement history.
-     */
-    List<QuantityMeasurementEntity> getAllMeasurements();
+    /** Get all measurement history. */
+    List<MeasurementHistoryDTO> getAllMeasurements();
 
-    /**
-     * Get measurements filtered by operation type.
-     */
-    List<QuantityMeasurementEntity> getMeasurementsByOperation(String operationType);
+    /** Get measurements filtered by operation type. */
+    List<MeasurementHistoryDTO> getMeasurementsByOperation(String operationType);
 
-    /**
-     * Get measurements filtered by measurement type.
-     */
-    List<QuantityMeasurementEntity> getMeasurementsByMeasurementType(String measurementType);
+    /** Get measurements filtered by measurement type. */
+    List<MeasurementHistoryDTO> getMeasurementsByMeasurementType(String measurementType);
 
-    /**
-     * Get total number of measurement records.
-     */
+    /** Get total measurement count. */
     long getMeasurementCount();
 
-    /**
-     * Clear all measurement history.
-     */
-    void clearHistory();
+    /** Get count by operation type. */
+    long getCountByOperation(String operationType);
 
-    /**
-     * Release service resources (delegates to repository).
-     */
-    void releaseResources();
+    /** Clear all measurement history. */
+    void clearHistory();
 }

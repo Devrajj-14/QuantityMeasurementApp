@@ -1,59 +1,33 @@
-package com.bridgelabz.quantitymeasurement.entity;
+package com.bridgelabz.quantitymeasurement.dto;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * JPA entity representing a persisted measurement record.
- * Maps to the quantity_measurements table in H2 database.
+ * DTO for returning measurement history records via the REST API.
+ * Decouples entity internals from API response.
  */
-@Entity
-@Table(name = "quantity_measurements", indexes = {
-        @Index(name = "idx_operation_type", columnList = "operationType"),
-        @Index(name = "idx_measurement_type", columnList = "measurementType")
-})
-public class QuantityMeasurementEntity {
+public class MeasurementHistoryDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "first_value", nullable = false)
     private double firstValue;
-
-    @Column(name = "first_unit", nullable = false, length = 50)
     private String firstUnit;
-
-    @Column(name = "second_value", nullable = false)
     private double secondValue;
-
-    @Column(name = "second_unit", nullable = false, length = 50)
     private String secondUnit;
-
-    @Column(name = "operation_type", nullable = false, length = 50)
     private String operationType;
-
-    @Column(name = "measurement_type", nullable = false, length = 50)
     private String measurementType;
-
-    @Column(name = "result_value")
     private double resultValue;
-
-    @Column(name = "result_unit", length = 50)
     private String resultUnit;
-
-    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // --- Constructors ---
-
-    public QuantityMeasurementEntity() {
+    public MeasurementHistoryDTO() {
     }
 
-    public QuantityMeasurementEntity(double firstValue, String firstUnit,
-                                     double secondValue, String secondUnit,
-                                     String operationType, String measurementType,
-                                     double resultValue, String resultUnit) {
+    public MeasurementHistoryDTO(Long id, double firstValue, String firstUnit,
+                                  double secondValue, String secondUnit,
+                                  String operationType, String measurementType,
+                                  double resultValue, String resultUnit,
+                                  LocalDateTime createdAt) {
+        this.id = id;
         this.firstValue = firstValue;
         this.firstUnit = firstUnit;
         this.secondValue = secondValue;
@@ -62,16 +36,7 @@ public class QuantityMeasurementEntity {
         this.measurementType = measurementType;
         this.resultValue = resultValue;
         this.resultUnit = resultUnit;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    // --- Lifecycle callback ---
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        this.createdAt = createdAt;
     }
 
     // --- Getters and Setters ---
@@ -154,18 +119,5 @@ public class QuantityMeasurementEntity {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    @Override
-    public String toString() {
-        return "MeasurementRecord{" +
-                "id=" + id +
-                ", " + firstValue + " " + firstUnit +
-                " " + operationType +
-                " " + secondValue + " " + secondUnit +
-                " = " + resultValue + " " + resultUnit +
-                ", type=" + measurementType +
-                ", at=" + createdAt +
-                '}';
     }
 }

@@ -1,4 +1,5 @@
-package com.bridgelabz;
+package com.bridgelabz.quantitymeasurement.model;
+import com.bridgelabz.quantitymeasurement.unit.WeightUnit;
 
 import java.util.Objects;
 
